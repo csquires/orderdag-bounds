@@ -1,8 +1,4 @@
 
-# coding: utf-8
-
-# In[1]:
-
 import causaldag as cd
 import save_utils
 import os
@@ -19,12 +15,13 @@ np.random.seed(1729)
 # In[2]:
 
 node_sizes = [200] 
-ndags = 50000
+ndags = 3000
 sparsities = [.5]
 
 DATA_FOLDER = 'bigger_run'
 
 # In[3]:
+
 
 def get_dags_folder(p, s):
     return os.path.join(DATA_FOLDER, 's=%s/p=%s' % (s, p))
@@ -57,6 +54,17 @@ def get_num_ivs_to_orient(dag, cpdag):
     ivs, icpdags = dag.fully_orienting_interventions_greedy(cpdag=cpdag)
     return len(ivs)
 
+
+def save_batch(batch_num, dags_at_once, p, s, run_folder):
+    dags = cd.rand.directed_erdos(p, s, size=dags_at_once)
+    for i, d in enumerate(dags):
+        dag_num = batch_num * dags_at_once + i
+        dag_folder = os.path.join(run_folder, 'dag%d' % dag_num)
+        os.makedirs(dag_folder)
+        dag_amat, node_list = d.to_amat(mode='numpy')
+        np.save(os.path.join(dag_folder, 'dag.npy'), dag_amat)
+
+
 def save_dags(p, s, ndags):
     """
     Save ndags orderDAGs with p nodes and sparsity s in the folder s=s/p=p
@@ -71,14 +79,13 @@ def save_dags(p, s, ndags):
             'ndags': ndags
         }
         save_utils.save_yaml(settings, os.path.join(run_folder, 'settings.yml'))
-    
-    dags = cd.rand.directed_erdos(p, s, size=ndags)
-    for i, d in enumerate(dags):
-        dag_folder = os.path.join(run_folder, 'dag%d' % i)
-        os.makedirs(dag_folder)
-        dag_amat, node_list = d.to_amat(mode='numpy')
-        np.save(os.path.join(dag_folder, 'dag.npy'), dag_amat)
-        
+
+    dags_at_once = 1000
+
+    nbatches = int(np.ceil(ndags/dags_at_once))
+    with Pool(cpu_count() - 1) as pool:
+        pool.starmap(save_batch, zip(range(nbatches), [dags_at_once]*nbatches, [p]*nbatches, [s]*nbatches, [run_folder]*nbatches))
+
 
 def save_mec_info(p, s, ndags, num_interventions_list):
     print('=== s=%s, p=%s ===' % (s, p))
@@ -139,9 +146,9 @@ for sparsity in sparsities:
 
 # In[ ]:
 
-for sparsity in sparsities:
-    for p in node_sizes:
-        save_mec_info(p, sparsity, ndags, [1, 2])
+# for sparsity in sparsities:
+#     for p in node_sizes:
+#         save_mec_info(p, sparsity, ndags, [1, 2])
 
 
 # In[ ]:
