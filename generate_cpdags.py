@@ -15,7 +15,7 @@ np.random.seed(1729)
 # In[2]:
 
 node_sizes = [200] 
-ndags = 3000
+ndags = 10000
 sparsities = [.5]
 
 DATA_FOLDER = 'bigger_run'
