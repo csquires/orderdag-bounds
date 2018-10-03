@@ -139,16 +139,16 @@ def save_mec_info(p, s, ndags, num_interventions_list):
 
 # In[5]:
 
-for sparsity in sparsities:
-    for p in node_sizes:
-        save_dags(p, sparsity, ndags)
+# for sparsity in sparsities:
+#     for p in node_sizes:
+#         save_dags(p, sparsity, ndags)
 
 
 # In[ ]:
 
-# for sparsity in sparsities:
-#     for p in node_sizes:
-#         save_mec_info(p, sparsity, ndags, [1, 2])
+for sparsity in sparsities:
+    for p in node_sizes:
+        save_mec_info(p, sparsity, ndags, [1, 2])
 
 
 # In[ ]:
