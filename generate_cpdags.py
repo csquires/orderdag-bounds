@@ -8,23 +8,10 @@ import numpy as np
 from more_itertools import chunked
 from collections import defaultdict
 from tqdm import tqdm
-import argparse
 import random
-
-parser = argparse.ArgumentParser('Generate DAGs, CPDAGs, and MECs')
 
 np.random.seed(1729)
 random.seed(1729)
-
-parser.add_argument('--densities', type=float, nargs='+', help='Density of graphs (probability of each edge being present)')
-parser.add_argument('--nnodes', type=float, nargs='+', help='Sizes of graphs (number of nodes)')
-parser.add_argument('--ndags', type=int, help='Number of DAGs per setting')
-
-args = parser.parse_args()
-
-node_sizes = args.nnodes
-ndags = args.ndags
-densities = args.densities
 
 
 def get_dags_folder(p, s):
@@ -56,7 +43,6 @@ def get_num_ivs_to_orient(dag, cpdag):
 
 def save_batch(tup):
     batch_num, dags_at_once, dags_in_batch, p, s, run_folder = tup
-    print(tup)
     dags = cd.rand.directed_erdos(p, s, size=dags_in_batch)
     for i, d in enumerate(dags):
         dag_num = batch_num * dags_at_once + i
@@ -64,10 +50,6 @@ def save_batch(tup):
         os.makedirs(dag_folder)
         dag_amat, node_list = d.to_amat(mode='numpy')
         np.save(os.path.join(dag_folder, 'dag.npy'), dag_amat)
-
-
-def test(a):
-    print(a)
 
 
 def save_dags(p, s, ndags):
@@ -91,9 +73,7 @@ def save_dags(p, s, ndags):
     ndags_by_batch = [dags_at_once]*nbatches
     ndags_by_batch[-1] = ndags - dags_at_once*(nbatches-1)
     with Pool(cpu_count() - 1) as pool:
-        r = pool.map(test, [1,2,3])
-        print(r)
-        # pool.map(save_batch, zip(range(nbatches), [dags_at_once]*nbatches, ndags_by_batch, [p]*nbatches, [s]*nbatches, [run_folder]*nbatches))
+        pool.map(save_batch, zip(range(nbatches), [dags_at_once]*nbatches, ndags_by_batch, [p]*nbatches, [s]*nbatches, [run_folder]*nbatches))
 
 
 def save_mec_info(p, s, ndags, num_interventions_list):
@@ -143,16 +123,3 @@ def save_mec_info(p, s, ndags, num_interventions_list):
 
     # === SAVE NUMBER INTERVENTIONS NEEDED TO FULLY ORIENT
     save_utils.save_list(num_ivs_to_orient, os.path.join(run_folder, 'num_ivs_to_orient.txt'))
-    
-
-for density in densities:
-    for p in node_sizes:
-        save_dags(p, density, ndags)
-
-
-for density in densities:
-    for p in node_sizes:
-        save_mec_info(p, density, ndags, [1, 2])
-
-
-
