@@ -9,46 +9,46 @@ import numpy as np
 from more_itertools import chunked
 from collections import defaultdict
 from tqdm import tqdm
+import argparse
+import random
+
+parser = argparse.ArgumentParser('Generate DAGs, CPDAGs, and MECs')
+
 np.random.seed(1729)
+random.seed(1729)
 
+parser.add_argument('--densities', type=float, nargs='+', help='Density of graphs (probability of each edge being present)')
+parser.add_argument('--nnodes', type=float, nargs='+', help='Sizes of graphs (number of nodes)')
+parser.add_argument('--ndags', type=int, help='Number of DAGs per setting')
 
-# In[2]:
+args = parser.parse_args()
 
-node_sizes = [200] 
-ndags = 10000
-sparsities = [.2]
-
-DATA_FOLDER = 'biggest_run'
-
-# In[3]:
+node_sizes = args.nnodes
+ndags = args.ndags
+densities = args.densities
 
 
 def get_dags_folder(p, s):
     return os.path.join(DATA_FOLDER, 's=%s/p=%s' % (s, p))
 
 
-# ### Generate and save DAGs, CPDAGs, and I-CPDAGs
-
-# #### For each (sparsity, # nodes) configuration, calculate:
-# - average number of unoriented edges
-# - percentage of DAGs that are uPDAGs (i.e. identical to their CPDAG)
-# - average number of unoriented edges after intervening on the optimal node
-
-# In[4]:
-
 # === THESE HAVE TO BE DEFINED AS SEPARATE FUNCTIONS TO BE USED BY THE MULTIPROCESSING POOL
 def get_cpdag(dag):
     return dag.cpdag()
 
+
 def get_mec_size(cpdag):
     return len(cpdag.all_dags())
+
 
 def get_optimal_icpdag(dag, cpdag, num_interventions):
     ivs, icpdags = dag.optimal_intervention_greedy(cpdag=cpdag, num_interventions=num_interventions)
     return icpdags
 
+
 def get_icpdag(dag, cpdag, ivs):
     return dag.interventional_cpdag(ivs, cpdag=cpdag)
+
 
 def get_num_ivs_to_orient(dag, cpdag):
     ivs, icpdags = dag.fully_orienting_interventions_greedy(cpdag=cpdag)
@@ -67,7 +67,7 @@ def save_batch(batch_num, dags_at_once, p, s, run_folder):
 
 def save_dags(p, s, ndags):
     """
-    Save ndags orderDAGs with p nodes and sparsity s in the folder s=s/p=p
+    Save ndags orderDAGs with p nodes and density s in the folder s=s/p=p
     """
     print('=== s=%s, p=%s ===' % (s, p))
     run_folder = get_dags_folder(p, s)
@@ -75,7 +75,7 @@ def save_dags(p, s, ndags):
         os.makedirs(run_folder)
         settings = {
             'nnodes': p,
-            'sparsity': s,
+            'density': s,
             'ndags': ndags
         }
         save_utils.save_yaml(settings, os.path.join(run_folder, 'settings.yml'))
@@ -136,22 +136,14 @@ def save_mec_info(p, s, ndags, num_interventions_list):
     save_utils.save_list(num_ivs_to_orient, os.path.join(run_folder, 'num_ivs_to_orient.txt'))
     
 
-
-# In[5]:
-
-for sparsity in sparsities:
+for density in densities:
     for p in node_sizes:
-        save_dags(p, sparsity, ndags)
+        save_dags(p, density, ndags)
 
 
-# In[ ]:
-
-for sparsity in sparsities:
+for density in densities:
     for p in node_sizes:
-        save_mec_info(p, sparsity, ndags, [1, 2])
-
-
-# In[ ]:
+        save_mec_info(p, density, ndags, [1, 2])
 
 
 
