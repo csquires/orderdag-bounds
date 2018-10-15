@@ -1,4 +1,3 @@
-
 import causaldag as cd
 import save_utils
 import os
@@ -55,8 +54,10 @@ def get_num_ivs_to_orient(dag, cpdag):
     return len(ivs)
 
 
-def save_batch(batch_num, dags_at_once, p, s, run_folder):
-    dags = cd.rand.directed_erdos(p, s, size=dags_at_once)
+def save_batch(tup):
+    batch_num, dags_at_once, dags_in_batch, p, s, run_folder = tup
+    print(tup)
+    dags = cd.rand.directed_erdos(p, s, size=dags_in_batch)
     for i, d in enumerate(dags):
         dag_num = batch_num * dags_at_once + i
         dag_folder = os.path.join(run_folder, 'dag%d' % dag_num)
@@ -65,11 +66,15 @@ def save_batch(batch_num, dags_at_once, p, s, run_folder):
         np.save(os.path.join(dag_folder, 'dag.npy'), dag_amat)
 
 
+def test(a):
+    print(a)
+
+
 def save_dags(p, s, ndags):
     """
     Save ndags orderDAGs with p nodes and density s in the folder s=s/p=p
     """
-    print('=== s=%s, p=%s ===' % (s, p))
+    print('=== SAVING DAGS for density=%s, nnodes=%s ===' % (s, p))
     run_folder = get_dags_folder(p, s)
     if not os.path.exists(run_folder):
         os.makedirs(run_folder)
@@ -83,8 +88,12 @@ def save_dags(p, s, ndags):
     dags_at_once = 1000
 
     nbatches = int(np.ceil(ndags/dags_at_once))
+    ndags_by_batch = [dags_at_once]*nbatches
+    ndags_by_batch[-1] = ndags - dags_at_once*(nbatches-1)
     with Pool(cpu_count() - 1) as pool:
-        pool.starmap(save_batch, zip(range(nbatches), [dags_at_once]*nbatches, [p]*nbatches, [s]*nbatches, [run_folder]*nbatches))
+        r = pool.map(test, [1,2,3])
+        print(r)
+        # pool.map(save_batch, zip(range(nbatches), [dags_at_once]*nbatches, ndags_by_batch, [p]*nbatches, [s]*nbatches, [run_folder]*nbatches))
 
 
 def save_mec_info(p, s, ndags, num_interventions_list):
