@@ -5,3 +5,6 @@ __pycache__/
 venv/
 big_run/
 bigger_run/
+biggest_run/
+really_big_run/
+figure*

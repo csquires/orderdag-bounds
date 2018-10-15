@@ -16,9 +16,9 @@ np.random.seed(1729)
 
 node_sizes = [200] 
 ndags = 10000
-sparsities = [.5]
+sparsities = [.2]
 
-DATA_FOLDER = 'bigger_run'
+DATA_FOLDER = 'biggest_run'
 
 # In[3]:
 
@@ -139,9 +139,9 @@ def save_mec_info(p, s, ndags, num_interventions_list):
 
 # In[5]:
 
-# for sparsity in sparsities:
-#     for p in node_sizes:
-#         save_dags(p, sparsity, ndags)
+for sparsity in sparsities:
+    for p in node_sizes:
+        save_dags(p, sparsity, ndags)
 
 
 # In[ ]:
